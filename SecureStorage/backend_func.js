@@ -2,6 +2,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { Pool } = require('pg');
 const { exec } = require('child_process');
+
 require('dotenv').config();
 
 const secretKey = process.env.JWTSECRET
@@ -30,7 +31,7 @@ async function isAuthenticated(req, res, next){
     next();
   }
   catch(error){
-    res.status(500).render('error', { error })
+    res.redirect('/')
   }
 }
 
@@ -58,7 +59,7 @@ async function isHomeAuthenticated(req, res, next){
 }
 
 async function getRegisterPage(req, res){
-  res.status(200).render('register')
+  res.status(200).render('register', {csrfToken: req.csrfToken()})
 }
 
 async function register(req, res){
@@ -71,6 +72,13 @@ async function register(req, res){
     //error: username already taken
     if (userExists.rows.length > 0)
       throw new Error('Username already taken'); //FRONTEND
+
+    //SECURE
+    // Minimum eight characters, at least one uppercase letter, one lowercase letter, one number, and one special character
+    const strongPasswordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/;
+    const isStrong = strongPasswordRegex.test(password);
+    if(!isStrong)
+      throw new Error('Password should at least have 1 letter, 1 digit, and have 6 characters in total')
     
     //Hash the password before storing it in the database
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -99,6 +107,7 @@ async function login(req, res){
       throw new Error('Please fill all of the form')
     }
 
+    //SECURE ALREADY
     //Query user data from db
     const result = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
 
@@ -118,7 +127,11 @@ async function login(req, res){
     const token = jwt.sign({ username: user.username }, secretKey, { expiresIn: '1h' });
 
     //Set the session token in a cookie
-    res.cookie('token', token, { httpOnly: true, maxAge: 3600000 }); // Expires in 1 hour (3600000 milliseconds)
+    res.cookie('token', token, 
+    { httpOnly: true, 
+      maxAge: 1800000,
+      sameSite: 'Strict' //SECURE
+    }); 
   
     //Succesful response
     res.redirect('/'); //FRONTEND
@@ -130,7 +143,7 @@ async function login(req, res){
 }
 
 async function getLoginPage(req, res){
-  res.status(200).render('login.ejs'); //FRONTEND
+  res.status(200).render('login.ejs', {csrfToken: req.csrfToken()}); //FRONTEND
 }
 
 async function createFile(req, res){
@@ -166,8 +179,8 @@ async function listFile(req, res){
     );
 
     const result = query.rows
-
-    res.render('list', { username, result }) //FRONTEND
+    const csrfToken = req.csrfToken()
+    res.render('list', { username, result, csrfToken }) //FRONTEND
   }
   catch(error){
     res.cookie('token', '', { expires: new Date(0) });
@@ -180,11 +193,22 @@ async function deleteFile(req, res){
   const tokenDecoded = jwt.verify(req.cookies.token, secretKey)
 
   try{
-      const command = 'ls ~/' + uid
-      exec(command, (error, stdout, stderr) => {
-        console.log(stdout)
-        return
-      })   
+    const uid_regex=/^[a-z0-9]+$/ //SECURE
+    if(!uid_regex.test(uid))
+      throw new Error("Input malformed");
+
+    const result = await pool.query(
+      'SELECT * FROM files WHERE uid = $1 AND file_owner = $2',
+      [uid, tokenDecoded.username]
+    );
+    
+    if(result.rows.length === 0)
+      throw new Error("File not found!")    //FRONTEND
+
+    exec('ls ~/' + uid, (error, stdout, stderr) => {
+      console.log(stdout)
+      return
+    })   
 
     await pool.query(
       'DELETE FROM files WHERE uid = $1',

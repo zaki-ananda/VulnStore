@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="script-src 'self';">
+  <title>File Table</title>
+  <style>
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+
+    th, td {
+      border: 1px solid #dddddd;
+      text-align: left;
+      padding: 8px;
+      position: relative;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+
+    td::after {
+      content: "";
+      display: block;
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: calc(var(--bar-width) * 1px);
+      background-color: #3498db; /* Adjust the background color of the bar as needed */
+    }
+  </style>
+</head>
+<body>
+  <h1>Welcome, <%= username%></h1>
+  <h3>File Storage</h3>
+  <form action="/delete" method="post">
+    <table>
+      <thead>
+        <tr>
+          <th>Select</th>
+          <th>File</th>
+          <th>Upload Date</th>
+        </tr>
+      </thead>
+      <% result.forEach(file => { %>
+        <tr>
+          <td><input type="radio" name="uid" value=<%= file.uid %>></td>
+          <td><%= file.filename %></td>
+          <td><%= file.upload_date %></td>
+        </tr>
+      <% }); %>
+    </table>
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <input type="submit" value="Delete">
+  </form>
+  <br>
+  <h3>Upload new file</h3>
+  <form action="/create" method="post" enctype="multipart/form-data">  
+    <!-- File input -->
+    <input type="file" name="uploadedFile" id="fileInput" />
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <br>
+    <input type="submit" value="Upload">
+  </form>
+  <br>
+  <h3><a href="http://localhost:7777/logout">Logout</a></h3>
+</body>
+</html>
