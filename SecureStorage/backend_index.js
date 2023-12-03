@@ -54,7 +54,8 @@ app.post('/delete', service.isAuthenticated, service.deleteFile)
 app.use(function (err, req, res, next) {
   if (err.code !== 'EBADCSRFTOKEN') return next(err)
   const error = new Error('Bad CSRF Token. Please try again')
-  res.status(500).render('error', { redirect: '/', error})
+  const localUrl = `${req.protocol}://${req.get('host')}`;
+  res.status(500).render('error', { redirect: '/', error, localUrl})
 })
 
 app.listen(port, () => {
