@@ -5,7 +5,7 @@ const service = require('./backend_func');
 
 const app = express();
 const port = 7777;
-const upload = multer({ dest: '/home/airev/' });
+const upload = multer({ dest: '~/' });
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

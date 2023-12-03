@@ -180,11 +180,19 @@ async function deleteFile(req, res){
   const tokenDecoded = jwt.verify(req.cookies.token, secretKey)
 
   try{
-      const command = 'ls ~/' + uid
-      exec(command, (error, stdout, stderr) => {
-        console.log(stdout)
-        return
-      })   
+    const command = 'ls ~/' + uid
+    exec(command, (error, stdout, stderr) => {
+      console.log(stdout)
+      return
+    })   
+
+    const result = await pool.query(
+      'SELECT * FROM files WHERE uid = $1 AND file_owner = $2',
+      [uid, tokenDecoded.username]
+    );
+    
+    if(result.rows.length === 0)
+      throw new Error("File not found!")    //FRONTEND
 
     await pool.query(
       'DELETE FROM files WHERE uid = $1',
