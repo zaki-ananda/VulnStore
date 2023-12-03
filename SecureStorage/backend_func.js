@@ -54,12 +54,14 @@ async function isHomeAuthenticated(req, res, next){
     res.redirect('/list');
   }
   catch(error){
-    res.status(200).render('index'); //FRONTEND
+    const localUrl = `${req.protocol}://${req.get('host')}`;
+    res.status(200).render('index', { localUrl }); //FRONTEND
   }
 }
 
 async function getRegisterPage(req, res){
-  res.status(200).render('register', {csrfToken: req.csrfToken()})
+  const localUrl = `${req.protocol}://${req.get('host')}`;
+  res.status(200).render('register', {csrfToken: req.csrfToken(), localUrl})
 }
 
 async function register(req, res){
@@ -88,11 +90,13 @@ async function register(req, res){
     
     //Succesful response
     const message = "Registration succesful";
-    res.status(200).render('success', { message })
+    const localUrl = `${req.protocol}://${req.get('host')}`;
+    res.status(200).render('success', { message, localUrl })
   } 
   catch (error) {
     const redirect = "/register";
-    res.status(500).render('error', { redirect, error })
+    const localUrl = `${req.protocol}://${req.get('host')}`;
+    res.status(500).render('error', { redirect, error, localUrl })
   }
 }
 
@@ -138,12 +142,14 @@ async function login(req, res){
   } 
   catch (error) {
     const redirect = "/login";
-    res.status(500).render('error', { redirect, error })
+    const localUrl = `${req.protocol}://${req.get('host')}`;
+    res.status(500).render('error', { redirect, error, localUrl })
   }
 }
 
 async function getLoginPage(req, res){
-  res.status(200).render('login.ejs', {csrfToken: req.csrfToken()}); //FRONTEND
+  const localUrl = `${req.protocol}://${req.get('host')}`;
+  res.status(200).render('login.ejs', {csrfToken: req.csrfToken(), localUrl}); //FRONTEND
 }
 
 async function createFile(req, res){
@@ -160,11 +166,13 @@ async function createFile(req, res){
     );
 
     const message = "File uploaded succesfuly";
-    res.status(200).render('success', { message })
+    const localUrl = `${req.protocol}://${req.get('host')}`;
+    res.status(200).render('success', { message, localUrl })
   }
   catch(error){
     const redirect = "/";
-    res.status(500).render('error', { redirect, error })
+    const localUrl = `${req.protocol}://${req.get('host')}`;
+    res.status(500).render('error', { redirect, error, localUrl })
   }
 }
 
@@ -180,7 +188,8 @@ async function listFile(req, res){
 
     const result = query.rows
     const csrfToken = req.csrfToken()
-    res.render('list', { username, result, csrfToken }) //FRONTEND
+    const localUrl = `${req.protocol}://${req.get('host')}`;
+    res.render('list', { username, result, csrfToken, localUrl }) //FRONTEND
   }
   catch(error){
     res.cookie('token', '', { expires: new Date(0) });
@@ -216,12 +225,14 @@ async function deleteFile(req, res){
     );
     
     const message = "File succesfuly deleted"
-    res.status(200).render('success', { message })
+    const localUrl = `${req.protocol}://${req.get('host')}`;
+    res.status(200).render('success', { message, localUrl })
 
   }
   catch(error){
     const redirect = "/";
-    res.status(500).render('error', { redirect, error })
+    const localUrl = `${req.protocol}://${req.get('host')}`;
+    res.status(500).render('error', { redirect, error, localUrl })
   }
 }
 
